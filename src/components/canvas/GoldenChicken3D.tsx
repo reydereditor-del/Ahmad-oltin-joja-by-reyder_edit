@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, Center } from '@react-three/drei';
+import { useGLTF, useTexture, Center } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface GoldenChicken3DProps {
@@ -8,9 +8,11 @@ interface GoldenChicken3DProps {
 }
 
 const CHICKEN_URL = `${import.meta.env.BASE_URL}models/chicken.glb`;
+const PLATE_URL = `${import.meta.env.BASE_URL}models/plate.glb`;
 const CHILI_URL = `${import.meta.env.BASE_URL}models/chili.glb`;
 const LEMON_URL = `${import.meta.env.BASE_URL}models/lemon.glb`;
 const TOMATO_URL = `${import.meta.env.BASE_URL}models/tomato.glb`;
+const SMOKE_TEX_URL = `${import.meta.env.BASE_URL}textures/smoke.png`;
 
 export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress }) => {
   const mainGroup = useRef<THREE.Group>(null);
@@ -18,13 +20,17 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   const steamGroup = useRef<THREE.Group>(null);
   const sparksGroup = useRef<THREE.Points>(null);
 
-  // Load realistic 3D scanned models
+  // 1. Load real scanned 3D models
   const chickenGltf = useGLTF(CHICKEN_URL);
+  const plateGltf = useGLTF(PLATE_URL);
   const chiliGltf = useGLTF(CHILI_URL);
   const lemonGltf = useGLTF(LEMON_URL);
   const tomatoGltf = useGLTF(TOMATO_URL);
 
-  // Enhance Chicken with crisp golden roasted warmth
+  // 2. Load realistic photographic smoke/steam texture
+  const smokeTexture = useTexture(SMOKE_TEX_URL);
+
+  // Enhance Chicken with crisp golden roasted PBR reflections
   const chickenScene = useMemo(() => {
     const cloned = chickenGltf.scene.clone(true);
     cloned.traverse((child) => {
@@ -34,23 +40,39 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
         mesh.receiveShadow = true;
         if (mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial;
-          mat.roughness = 0.35;
-          mat.metalness = 0.12;
-          mat.emissive = new THREE.Color('#3d1502');
-          mat.emissiveIntensity = 0.25;
+          mat.roughness = 0.32;
+          mat.metalness = 0.15;
+          mat.emissive = new THREE.Color('#381302');
+          mat.emissiveIntensity = 0.28;
         }
       }
     });
     return cloned;
   }, [chickenGltf]);
 
-  // Clone garnish elements with shadows
+  // Real 3D Plate with luxury obsidian & gold trim
+  const plateScene = useMemo(() => {
+    const cloned = plateGltf.scene.clone(true);
+    cloned.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: '#121218',
+          roughness: 0.15,
+          metalness: 0.85,
+        });
+      }
+    });
+    return cloned;
+  }, [plateGltf]);
+
+  // Real 3D Garnishes
   const chiliScene1 = useMemo(() => {
     const c = chiliGltf.scene.clone(true);
     c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-      }
+      if ((child as THREE.Mesh).isMesh) child.castShadow = true;
     });
     return c;
   }, [chiliGltf]);
@@ -58,9 +80,7 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   const chiliScene2 = useMemo(() => {
     const c = chiliGltf.scene.clone(true);
     c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-      }
+      if ((child as THREE.Mesh).isMesh) child.castShadow = true;
     });
     return c;
   }, [chiliGltf]);
@@ -68,9 +88,7 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   const lemonScene = useMemo(() => {
     const c = lemonGltf.scene.clone(true);
     c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-      }
+      if ((child as THREE.Mesh).isMesh) child.castShadow = true;
     });
     return c;
   }, [lemonGltf]);
@@ -78,9 +96,7 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   const tomatoScene1 = useMemo(() => {
     const c = tomatoGltf.scene.clone(true);
     c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-      }
+      if ((child as THREE.Mesh).isMesh) child.castShadow = true;
     });
     return c;
   }, [tomatoGltf]);
@@ -88,42 +104,23 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   const tomatoScene2 = useMemo(() => {
     const c = tomatoGltf.scene.clone(true);
     c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-      }
+      if ((child as THREE.Mesh).isMesh) child.castShadow = true;
     });
     return c;
   }, [tomatoGltf]);
 
-  // Luxury Obsidian Platter
-  const plateMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      color: '#0a0a0f',
-      roughness: 0.18,
-      metalness: 0.85,
-    });
-  }, []);
-
-  const goldRimMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      color: '#f59e0b',
-      roughness: 0.12,
-      metalness: 0.96,
-      emissive: new THREE.Color('#78350f'),
-      emissiveIntensity: 0.45,
-    });
-  }, []);
-
-  // Rising steam puffs
-  const steamParticles = useMemo(() => {
+  // Photographic Steam/Smoke Particle Data
+  const steamPuffs = useMemo(() => {
     const list = [];
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 24; i++) {
       list.push({
-        x: (Math.random() - 0.5) * 1.4,
-        y: Math.random() * 2.8,
-        z: (Math.random() - 0.5) * 1.4,
-        scale: 0.18 + Math.random() * 0.4,
-        speed: 0.8 + Math.random() * 1.2,
+        x: (Math.random() - 0.5) * 1.2,
+        y: 0.3 + Math.random() * 2.8,
+        z: (Math.random() - 0.5) * 1.2,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.4,
+        scale: 0.8 + Math.random() * 0.9,
+        speed: 0.6 + Math.random() * 0.8,
         offset: Math.random() * Math.PI * 2,
       });
     }
@@ -132,12 +129,12 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
 
   // Golden glowing embers
   const sparksGeo = useMemo(() => {
-    const count = 140;
+    const count = 130;
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2;
-      const r = 0.8 + Math.random() * 3.2;
-      const y = -1 + Math.random() * 4.2;
+      const r = 0.8 + Math.random() * 3.4;
+      const y = -1 + Math.random() * 4.4;
       positions[i * 3] = Math.cos(theta) * r;
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = Math.sin(theta) * r;
@@ -153,40 +150,40 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
     if (mainGroup.current) {
       const p = scrollProgress;
       let targetX = 0;
-      let targetY = -0.3;
+      let targetY = -0.35;
       let targetZ = 0;
       let targetRotY = t * 0.32;
       let targetRotX = 0.12;
-      // Enlarged base scale for grand heroic appearance
-      let targetScale = 1.85;
+      // Prominent, majestic large scale
+      let targetScale = 1.95;
 
       if (p < 0.25) {
         // Hero
         const sub = p / 0.25;
-        targetX = THREE.MathUtils.lerp(0, 1.4, sub);
-        targetY = THREE.MathUtils.lerp(-0.3, -0.15, sub);
-        targetScale = THREE.MathUtils.lerp(1.85, 2.1, sub);
+        targetX = THREE.MathUtils.lerp(0, 1.45, sub);
+        targetY = THREE.MathUtils.lerp(-0.35, -0.15, sub);
+        targetScale = THREE.MathUtils.lerp(1.95, 2.25, sub);
         targetRotY += sub * 1.4;
       } else if (p < 0.6) {
         // Story & Craft
         const sub = (p - 0.25) / 0.35;
-        targetX = THREE.MathUtils.lerp(1.4, -1.5, sub);
+        targetX = THREE.MathUtils.lerp(1.45, -1.6, sub);
         targetY = THREE.MathUtils.lerp(-0.15, 0.2, sub);
         targetRotX = 0.25;
         targetRotY += 1.4 + sub * 2.2;
-        targetScale = THREE.MathUtils.lerp(2.1, 1.7, sub);
+        targetScale = THREE.MathUtils.lerp(2.25, 1.8, sub);
       } else {
         // Menu & Delivery
         const sub = Math.min(1, (p - 0.6) / 0.4);
-        targetX = THREE.MathUtils.lerp(-1.5, 1.6, sub);
+        targetX = THREE.MathUtils.lerp(-1.6, 1.7, sub);
         targetY = THREE.MathUtils.lerp(0.2, -0.4, sub);
         targetRotX = 0.12;
         targetRotY += 3.6 + sub * 1.8;
-        targetScale = THREE.MathUtils.lerp(1.7, 1.5, sub);
+        targetScale = THREE.MathUtils.lerp(1.8, 1.55, sub);
       }
 
       mainGroup.current.position.x = THREE.MathUtils.lerp(mainGroup.current.position.x, targetX, 0.08);
-      mainGroup.current.position.y = THREE.MathUtils.lerp(mainGroup.current.position.y, targetY + Math.sin(t * 1.4) * 0.09, 0.08);
+      mainGroup.current.position.y = THREE.MathUtils.lerp(mainGroup.current.position.y, targetY + Math.sin(t * 1.4) * 0.08, 0.08);
       mainGroup.current.position.z = THREE.MathUtils.lerp(mainGroup.current.position.z, targetZ, 0.08);
 
       mainGroup.current.rotation.y = THREE.MathUtils.lerp(mainGroup.current.rotation.y, targetRotY, 0.08);
@@ -196,21 +193,29 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
       mainGroup.current.scale.set(s, s, s);
     }
 
-    // Animate orbiting 3D real garnish models
+    // Orbiting Garnishes
     if (garnishGroup.current) {
       garnishGroup.current.rotation.y = -t * 0.18;
     }
 
-    // Animate steam puffs
+    // Realistic Whisps of Steam (rising, rotating, billowing)
     if (steamGroup.current) {
       steamGroup.current.children.forEach((child, i) => {
-        const p = steamParticles[i];
+        const p = steamPuffs[i];
         if (p) {
-          child.position.y += delta * 0.45 * p.speed;
-          child.position.x = p.x + Math.sin(t * 1.6 + p.offset) * 0.2;
-          child.position.z = p.z + Math.cos(t * 1.6 + p.offset) * 0.2;
-          if (child.position.y > 3.0) {
-            child.position.y = 0.2;
+          child.position.y += delta * 0.5 * p.speed;
+          child.position.x = p.x + Math.sin(t * 1.2 + p.offset) * 0.18;
+          child.position.z = p.z + Math.cos(t * 1.2 + p.offset) * 0.18;
+          child.rotation.z += delta * p.rotSpeed;
+
+          // Billow expansion as it rises
+          const heightRatio = Math.max(0, Math.min(1, (child.position.y - 0.3) / 2.8));
+          const currentScale = p.scale * (1 + heightRatio * 0.8);
+          child.scale.set(currentScale, currentScale, currentScale);
+
+          // Reset when reaching top
+          if (child.position.y > 3.2) {
+            child.position.y = 0.3;
           }
         }
       });
@@ -222,53 +227,52 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   });
 
   return (
-    <group ref={mainGroup} position={[0, -0.3, 0]}>
-      {/* 1. Large Luxury Platter */}
-      <mesh position={[0, -0.5, 0]} material={plateMaterial} receiveShadow>
-        <cylinderGeometry args={[2.7, 2.2, 0.08, 48]} />
-      </mesh>
-      <mesh position={[0, -0.46, 0]} material={goldRimMaterial}>
-        <torusGeometry args={[2.7, 0.035, 16, 48]} />
-      </mesh>
-
-      {/* 2. Scaled Up Photorealistic Golden Chicken */}
-      <group position={[0, 0.25, 0]}>
-        <Center top>
-          <primitive object={chickenScene} scale={1.5} />
+    <group ref={mainGroup} position={[0, -0.35, 0]}>
+      {/* 1. Real Scanned 3D Serving Plate */}
+      <group position={[0, -0.4, 0]} rotation={[0, 0, 0]}>
+        <Center>
+          <primitive object={plateScene} scale={18.5} />
         </Center>
       </group>
 
-      {/* 3. Orbiting Real 3D Garnishes (Chili, Lemon, Tomato) */}
+      {/* 2. Scaled Up Photorealistic Golden Chicken */}
+      <group position={[0, 0.3, 0]}>
+        <Center top>
+          <primitive object={chickenScene} scale={1.6} />
+        </Center>
+      </group>
+
+      {/* 3. Orbiting Real 3D Garnishes */}
       <group ref={garnishGroup}>
-        {/* Floating Red Chili Pepper 1 */}
-        <group position={[2.1, 0.5, 0.8]} rotation={[0.4, 0.6, -0.3]}>
+        {/* Real 3D Red Chili Pepper 1 */}
+        <group position={[2.2, 0.5, 0.8]} rotation={[0.4, 0.6, -0.3]}>
           <Center>
             <primitive object={chiliScene1} scale={0.42} />
           </Center>
         </group>
 
-        {/* Floating Red Chili Pepper 2 (Opposite side) */}
-        <group position={[-2.2, -0.1, -0.9]} rotation={[-0.5, 1.2, 0.6]}>
+        {/* Real 3D Red Chili Pepper 2 */}
+        <group position={[-2.3, -0.1, -0.9]} rotation={[-0.5, 1.2, 0.6]}>
           <Center>
             <primitive object={chiliScene2} scale={0.36} />
           </Center>
         </group>
 
-        {/* Floating Fresh Sliced Citrus Lemon */}
-        <group position={[-1.9, 0.8, 1.2]} rotation={[0.8, -0.4, 0.5]}>
+        {/* Real 3D Fresh Sliced Citrus Lemon */}
+        <group position={[-2.0, 0.8, 1.2]} rotation={[0.8, -0.4, 0.5]}>
           <Center>
             <primitive object={lemonScene} scale={0.12} />
           </Center>
         </group>
 
-        {/* Platter Cherry Tomato 1 */}
-        <group position={[1.8, -0.25, -1.1]} rotation={[0.2, 0.8, 0]}>
+        {/* Real 3D Cherry Tomato 1 */}
+        <group position={[1.9, -0.25, -1.1]} rotation={[0.2, 0.8, 0]}>
           <Center>
             <primitive object={tomatoScene1} scale={0.007} />
           </Center>
         </group>
 
-        {/* Floating Cherry Tomato 2 */}
+        {/* Real 3D Cherry Tomato 2 */}
         <group position={[0.4, 1.4, -1.8]} rotation={[-0.3, 0.2, 0.4]}>
           <Center>
             <primitive object={tomatoScene2} scale={0.006} />
@@ -276,17 +280,19 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
         </group>
       </group>
 
-      {/* 4. Rising Steam Particles */}
+      {/* 4. Realistic Photographic Steam Billows */}
       <group ref={steamGroup}>
-        {steamParticles.map((p, idx) => (
+        {steamPuffs.map((p, idx) => (
           <mesh key={idx} position={[p.x, p.y, p.z]} scale={p.scale}>
-            <sphereGeometry args={[0.3, 12, 12]} />
+            <planeGeometry args={[1.5, 1.5]} />
             <meshStandardMaterial
-              color="#fff0e0"
+              map={smokeTexture}
               transparent
-              opacity={0.13}
+              opacity={0.18}
               roughness={1}
               depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              side={THREE.DoubleSide}
             />
           </mesh>
         ))}
@@ -306,8 +312,10 @@ export const GoldenChicken3D: React.FC<GoldenChicken3DProps> = ({ scrollProgress
   );
 };
 
-// Preload models for instantaneous display
+// Preload assets for instant display
 useGLTF.preload(CHICKEN_URL);
+useGLTF.preload(PLATE_URL);
 useGLTF.preload(CHILI_URL);
 useGLTF.preload(LEMON_URL);
 useGLTF.preload(TOMATO_URL);
+useTexture.preload(SMOKE_TEX_URL);
